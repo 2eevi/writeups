@@ -16,7 +16,7 @@ We discover subdirectories like `/images` and `/uploads`, which hint at a potent
 
 Among the subdirectories, `/dev` stands out. Within it, we find `phpbash.php` — a web-based Bash emulator designed for easier directory interaction. This gives us an excellent opportunity to elevate privileges and establish remote access. From here, we move to the `/uploads` directory and attempt to deliver a PHP reverse shell, assuming `.php` file execution is allowed:
 
-![image.png](./Uploads/DescargarReverseShell - Copy.png)
+![image.png](./Uploads/DescargarReverseShell.png)
 
 We use a basic PHP reverse shell script and, through our pseudo-terminal, perform a brief reconnaissance to prepare the environment. Then we upload the shell by setting up a listener using `nc` (netcat), and configure it to only transfer the reverse shell script:
 
@@ -34,7 +34,7 @@ Afterward, we execute the uploaded script via the browser and start listening on
 
 Afterward, we execute the uploaded script via the browser and start listening on the configured port to catch the reverse connection. It’s important to edit the PHP shell beforehand to insert your own IP and listening port:
 
-![Tratamiento tty.png](./Uploads/Tratamiento tty.png)
+![Tratamiento tty.png](./Uploads/TratamientoTTY.png)
 
 Once we receive the connection, we treat the TTY session to stabilize the shell and make it more usable (e.g., support for `tab` completion, `clear`, `nano`, etc.). The commands used for TTY stabilization are:
 
