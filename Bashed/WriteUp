@@ -1,6 +1,7 @@
 We start by performing a scan to identify the open ports available:
 
-![i](uploads/AnalisisLsLaAlaRaiz.png)
+![Port Scan](https://raw.githubusercontent.com/2eevi/writeups/main/Bashed/Uploads/AnalisisLsLaAlaRaiz.png)
+
 
 
 We identify that port 80 is open, which immediately suggests we are facing an HTTP server. So, we proceed to analyze the services and versions running on that port:
