@@ -1,11 +1,12 @@
 We start by performing a scan to identify the open ports available:
 
-![Descripción de la imagen](./Uploads/AnalisisLsLaAlaRaiz.png)
+![Descripción de la imagen](./Uploads/Bashed-EscaneoP.png)
 
 
 
 
 We identify that port 80 is open, which immediately suggests we are facing an HTTP server. So, we proceed to analyze the services and versions running on that port:
+
 
 
 
