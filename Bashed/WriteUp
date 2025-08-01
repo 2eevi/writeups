@@ -1,5 +1,5 @@
 We start by performing a scan to identify the open ports available:
-![i](../uploads/AnalisisLsLaAlaRaiz.a.png)
+![i](uploads/AnalisisLsLaAlaRaiz.png)
 
 
 We identify that port 80 is open, which immediately suggests we are facing an HTTP server. So, we proceed to analyze the services and versions running on that port:
